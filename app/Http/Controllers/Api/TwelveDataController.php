@@ -10,7 +10,7 @@ use App\Http\Controllers\Controller;
 
 class TwelveDataController extends Controller
 {
-     use ApiResponse;
+    use ApiResponse;
 
     protected $twelveData;
 
@@ -19,15 +19,42 @@ class TwelveDataController extends Controller
         $this->twelveData = $twelveData;
     }
 
-    public function getPrice(Request $request)
+    /**
+     * Get real-time price + 10-minute % change
+     */
+    public function getPrice(): \Illuminate\Http\JsonResponse
     {
-        $symbol = $request->query('symbol', 'AAPL');
-
-        $data = $this->twelveData->getRealTimePrice($symbol);
-
-         
-        // event(new CryptoPriceUpdated($data));
         
-        return $this->success($data, 'Real-time stock price', 200);
+        $symbols = ['DOGE/USD', 'BTC/USD', 'ETH/USD', 'SOL/USD'];
+
+        $result = [];
+
+        foreach ($symbols as $symbol) {
+            // Current price
+            $priceData = $this->twelveData->getRealTimePrice($symbol);
+            $price = isset($priceData['price']) ? (float) $priceData['price'] : null;
+
+            // 10-minute % change
+            $changePct = $this->twelveData->get10minuteChange($symbol) ?? 0.0;
+
+            // UI-friendly formatting
+            $formattedPrice  = $price !== null ? '$' . number_format($price, 0, '.', ',') : null;
+            $formattedChange = ($changePct >= 0 ? '+' : '') . number_format($changePct, 2) . '%';
+            $changeClass     = $changePct >= 0 ? 'positive' : 'negative';
+
+            $result[] = [
+                'symbol'           => $symbol,
+                'price'            => $price,
+                'formatted_price'  => $formattedPrice,
+                'change_10m'       => $changePct,
+                'formatted_change' => $formattedChange,
+                'change_class'     => $changeClass,
+            ];
+        }
+
+        return $this->success([
+            'data'      => $result,
+            'timestamp' => now()->toIso8601String(),
+        ], 'All symbols real-time price with 10-minute change', 200);
     }
 }

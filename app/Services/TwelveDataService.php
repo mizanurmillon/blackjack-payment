@@ -15,21 +15,53 @@ class TwelveDataService
     public function __construct()
     {
         $this->baseUrl = config('services.twelvedata.base_url');
-        $this->apiKey = config('services.twelvedata.api_key');
+        $this->apiKey  = config('services.twelvedata.api_key');
     }
 
-    // ✅ Get Real-Time Stock Price
-    public function getRealTimePrice($symbol)
+    /** --------------------------------------------------------------
+     *  Get real-time price (single value)
+     *  -------------------------------------------------------------- */
+    public function getRealTimePrice(string $symbol): ?array
     {
-        $response = Http::get("{$this->baseUrl}/quote", [
+        $response = Http::get("{$this->baseUrl}/price", [
             'symbol' => $symbol,
             'apikey' => $this->apiKey,
         ]);
 
-        if ($response->successful()) {
-            return $response->json();
+        return $response->successful() ? $response->json() : null;
+    }
+
+    /** --------------------------------------------------------------
+     *  Get 24 h price change %
+     *  – we request two points: now & 24 h ago
+     *  -------------------------------------------------------------- */
+    public function get10minuteChange(string $symbol): ?float
+    {
+        $response = Http::get("{$this->baseUrl}/time_series", [
+            'symbol'     => $symbol,
+            'interval'   => '1min',
+            'outputsize' => 11,               // 10 minutes ago + current
+            'apikey'     => $this->apiKey,
+        ]);
+
+        if (!$response->successful()) {
+            return null;
         }
 
-        return $this->error([], 'Failed to get real-time stock price', 422);
+        $values = $response->json('values') ?? [];
+        if (count($values) < 11) {
+            return null;
+        }
+
+        $current = (float) ($values[0]['close'] ?? 0);
+        $tenMinAgo = (float) ($values[10]['close'] ?? 0);
+
+        if ($tenMinAgo == 0) {
+            return null;
+        }
+
+        $changePct = (($current - $tenMinAgo) / $tenMinAgo) * 100;
+
+        return round($changePct, 2);
     }
 }
