@@ -184,7 +184,7 @@
                                 <!-- CTA Row -->
                                 <tr>
                                     <td style="padding-top:18px; text-align:center;">
-                                        <img src="{{ asset( $setting-logo ?? 'backend/assets/images/colored-logo.png') }}" alt="{{ config('app.name') }} Logo"
+                                        <img src="{{ asset( $setting->logo ?? 'backend/assets/images/colored-logo.png') }}" alt="{{ config('app.name') }} Logo"
                                             style="display:block; max-width:150px; width:100%; height:auto; margin:0 auto;">
                                     </td>
                                 </tr>
