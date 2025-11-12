@@ -39,6 +39,7 @@ class ApplyController extends Controller
 
         try {
             $setting = SystemSetting::first();
+            // dd($setting->logo);
 
             $data = ApplyForm::create([
                 'business_name' => $request->business_name,
@@ -56,7 +57,7 @@ class ApplyController extends Controller
                 'receive_call' => $request->receive_call,
             ]);
 
-            Mail::to( $setting->email ?? 'sales@blackjackpayments.com')->send(new ApplyMail($data));
+            Mail::to( $setting->email ?? 'sales@blackjackpayments.com')->send(new ApplyMail($data, $setting));
 
             return $this->success($data, 'Apply form created successfully', 200);
         } catch (\Exception $e) {

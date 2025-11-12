@@ -13,14 +13,15 @@ class ApplyMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $data;
+    public $data, $setting;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($data)
+    public function __construct($data, $setting)
     {
         $this->data = $data;
+        $this->setting = $setting;
     }
 
     /**
